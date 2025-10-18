@@ -8,5 +8,4 @@ wordcloud
 altair
 Sastrawi
 bertopic
-
-
+nlp_id

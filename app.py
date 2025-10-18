@@ -315,7 +315,7 @@ with tab2:
 
         # Show table
         st.subheader("📊 Sentiment Prediction Results")
-        st.caption("Showing top 10 rows. Explore full results by sentiment below ⬇️")
+        st.write("Showing top 10 rows. Explore full results by sentiment below ⬇️")
         st.dataframe(df[[col_name, "Predicted_Label"]].head(10))
 
         # Bar chart distribution
@@ -329,21 +329,24 @@ with tab2:
         )
         sentiment_counts.columns = ["Sentiment", "Count"]
 
+        sentiment_counts["Percentage"] = ((sentiment_counts["Count"] / sentiment_counts["Count"].sum() * 100).round()).astype(int)
+        sentiment_counts["label"] = sentiment_counts["Percentage"].astype(str) + "% (" + sentiment_counts["Count"].astype(str) + ")"
+
         bars = alt.Chart(sentiment_counts).mark_bar().encode(
             x=alt.X("Sentiment", sort=order, axis=alt.Axis(labelAngle=0, labelFontSize=18, title=None)),
             y=alt.Y("Count", axis=alt.Axis(labelFontSize=12, title=None, tickMinStep=1)),
             color=alt.Color("Sentiment", scale=alt.Scale(domain=order, range=["#e87b7d", "#68A2E8", "#90E8A6"])),
-            tooltip=["Sentiment", "Count"]
+            tooltip=["Sentiment", "Percentage", "Count"]
         )
 
         text = bars.mark_text(
             align="center",
             baseline="bottom",
             dy=-5,
-            fontSize=14,
+            fontSize=16,
             fontWeight="bold"
         ).encode(
-            text="Count:Q"
+            text="label:N"
         )
 
         chart = (bars + text).configure_legend(disable=True)
@@ -469,30 +472,23 @@ with tab3:
         # Drop hasil "Outlier"
         if not df_neg.empty:
             df_neg = df_neg[df_neg["Predicted_Topic"] != "Outlier"]
-
-        if not df_net.empty:
-            df_net = df_net[df_net["Predicted_Topic"] != "Outlier"]
-
-        if not df_pos.empty:
-            df_pos = df_pos[df_pos["Predicted_Topic"] != "Outlier"]
-
-        # Preview top 10 data (all)
-        if not df_neg.empty:
             df_neg["Sentiment"] = "Negatif"
 
         if not df_net.empty:
+            df_net = df_net[df_net["Predicted_Topic"] != "Outlier"]
             df_net["Sentiment"] = "Netral"
 
         if not df_pos.empty:
+            df_pos = df_pos[df_pos["Predicted_Topic"] != "Outlier"]
             df_pos["Sentiment"] = "Positif"
 
-        df_all = pd.concat([df_neg, df_net, df_pos], ignore_index=False).sort_index()
+        df_all = pd.concat([df_neg, df_net, df_pos], ignore_index=False).sort_index().reset_index()
 
-        st.caption("Showing top 10 rows. Explore all topic clusters per sentiment using the tabs below ⬇️")
-        st.dataframe(df_all[[col_name, "Predicted_Topic"]].head(10))
+        st.write("Showing top 10 rows. Explore all topic clusters per sentiment using the tabs below ⬇️")
+        st.dataframe(df_all[[col_name, "Sentiment", "Predicted_Topic"]].head(10))
 
         st.caption("")
-        st.caption("Select a sentiment tab below to explore topic clusters.")
+        st.write("Select a sentiment tab below to explore topic clusters.")
         # Buat nested tabs per sentiment
         topic_tabs = st.tabs(["🔴 Negative", "🔵 Neutral", "🟢 Positive"])
 
@@ -503,6 +499,7 @@ with tab3:
             else:
                 # Bar chart distribution
                 st.subheader("📈 Negative Topic Distribution")
+                st.write("📌 The topics below represent negative feedback & issues reported by Transjakarta users")
                 order_neg = ["Layanan Transjakarta", "Sistem pembayaran: Tap in/out", "Waktu tunggu", "Ketersediaan armada",
                              "Sistem pengumuman", "Aplikasi Transjakarta", "Fasilitas halte"]
                 topic_counts_neg = (
@@ -514,21 +511,24 @@ with tab3:
 
                 topic_counts_neg.columns = ["Topic", "Count"]
 
+                topic_counts_neg["Percentage"] = ((topic_counts_neg["Count"] / topic_counts_neg["Count"].sum() * 100).round()).astype(int)
+                topic_counts_neg["label"] = topic_counts_neg["Percentage"].astype(str) + "% (" + topic_counts_neg["Count"].astype(str) + ")"
+
                 bars_neg = alt.Chart(topic_counts_neg).mark_bar().encode(
-                    x=alt.X("Topic", sort=order_neg, axis=alt.Axis(labelAngle=0, labelFontSize=16, title=None)),
+                    x=alt.X("Topic", sort=order_neg, axis=alt.Axis(labelAngle=0, labelFontSize=12, title=None)),
                     y=alt.Y("Count", axis=alt.Axis(labelFontSize=12, title=None, tickMinStep=1)),
                     color=alt.Color("Topic", scale=alt.Scale(domain=order_neg, range=["#8DAFC8", "#FEB989", "#F49A9D", "#A4D3D0", "#96C498", "#F9DC98", "#DAB7E3"])),
-                    tooltip=["Topic", "Count"]
+                    tooltip=["Topic", "Percentage", "Count"]
                 )
 
                 text_neg = bars_neg.mark_text(
                     align="center",
                     baseline="bottom",
                     dy=-5,
-                    fontSize=14,
+                    fontSize=16,
                     fontWeight="bold"
                 ).encode(
-                    text="Count:Q"
+                    text="label:N"
                 )
 
                 chart_neg = (bars_neg + text_neg).configure_legend(disable=True)
@@ -602,7 +602,7 @@ with tab3:
                 # Download hasil
                 st.markdown("---")
                 st.markdown("#### 📥 Download Negative Topic Prediction Result")
-                st.caption("Choose your preferred file format to download the results.")
+                st.write("Choose your preferred file format to download the results.")
 
                 df_topic_neg_result = df_neg[[col_name, "Predicted_Topic"]].copy()
                 df_topic_neg_result.columns = ["Text", "Predicted Topic"]
@@ -640,7 +640,8 @@ with tab3:
             else:
                 # Bar chart distribution
                 st.subheader("📈 Neutral Topic Distribution")
-                order_net = ["Panduan rute", "Jadwal operasional bus", "Sistem pembayaran"]
+                st.write("📌 The topics below represent feedback & inquiries from Transjakarta users")
+                order_net = ["Panduan rute", "Jadwal operasional bus", "Informasi sistem pembayaran"]
                 topic_counts_net = (
                     df_net["Predicted_Topic"]
                     .value_counts()
@@ -649,21 +650,24 @@ with tab3:
                 )
                 topic_counts_net.columns = ["Topic", "Count"]
 
+                topic_counts_net["Percentage"] = ((topic_counts_net["Count"] / topic_counts_net["Count"].sum() * 100).round()).astype(int)
+                topic_counts_net["label"] = topic_counts_net["Percentage"].astype(str) + "% (" + topic_counts_net["Count"].astype(str) + ")"
+
                 bars_net = alt.Chart(topic_counts_net).mark_bar().encode(
-                    x=alt.X("Topic", sort=order_net, axis=alt.Axis(labelAngle=0, labelFontSize=16, title=None)),
+                    x=alt.X("Topic", sort=order_net, axis=alt.Axis(labelAngle=0, labelFontSize=12, title=None)),
                     y=alt.Y("Count", axis=alt.Axis(labelFontSize=12, title=None, tickMinStep=1)),
                     color=alt.Color("Topic", scale=alt.Scale(domain=order_net, range=["#8DAFC8", "#FEB989", "#DAB7E3"])),
-                    tooltip=["Topic", "Count"]
+                    tooltip=["Topic", "Percentage", "Count"]
                 )
 
                 text_net = bars_net.mark_text(
                     align="center",
                     baseline="bottom",
                     dy=-5,
-                    fontSize=14,
+                    fontSize=16,
                     fontWeight="bold"
                 ).encode(
-                    text="Count:Q"
+                    text="label:N"
                 )
 
                 chart_net = (bars_net + text_net).configure_legend(disable=True)
@@ -674,7 +678,7 @@ with tab3:
                 topic_color_map_net = {
                     "Panduan rute": "#8DAFC8",
                     "Jadwal operasional bus": "#FEB989",
-                    "Sistem pembayaran": "#DAB7E3"
+                    "Informasi sistem pembayaran": "#DAB7E3"
                 }
                 
                 def generate_wordcloud_net(texts, topic):
@@ -734,7 +738,7 @@ with tab3:
                 # Download hasil
                 st.markdown("---")
                 st.markdown("#### 📥 Download Neutral Topic Prediction Result")
-                st.caption("Choose your preferred file format to download the results.")
+                st.write("Choose your preferred file format to download the results.")
 
                 df_topic_net_result = df_net[[col_name, "Predicted_Topic"]].copy()
                 df_topic_net_result.columns = ["Text", "Predicted Topic"]
@@ -772,6 +776,7 @@ with tab3:
             else:
                 # Bar chart distribution
                 st.subheader("📈 Positive Topic Distribution")
+                st.write("📌 The topics below represent positive feedback & appreciation from Transjakarta users")
                 order_pos = ["Kenyamanan transportasi dan supir", "Apresiasi pelayanan petugas",
                              "Pengalaman positif layanan Transjakarta", "Ekspresi pujian", "Ekspansi rute dan mobilitas"]
                 topic_counts_pos = (
@@ -783,11 +788,14 @@ with tab3:
 
                 topic_counts_pos.columns = ["Topic", "Count"]
 
+                topic_counts_pos["Percentage"] = ((topic_counts_pos["Count"] / topic_counts_pos["Count"].sum() * 100).round()).astype(int)
+                topic_counts_pos["label"] = topic_counts_pos["Percentage"].astype(str) + "% (" + topic_counts_pos["Count"].astype(str) + ")"
+
                 bars_pos = alt.Chart(topic_counts_pos).mark_bar().encode(
-                    x=alt.X("Topic", sort=order_pos, axis=alt.Axis(labelAngle=0, labelFontSize=16, title=None)),
+                    x=alt.X("Topic", sort=order_pos, axis=alt.Axis(labelAngle=0, labelFontSize=12, title=None)),
                     y=alt.Y("Count", axis=alt.Axis(labelFontSize=12, title=None, tickMinStep=1)),
                     color=alt.Color("Topic", scale=alt.Scale(domain=order_pos, range=["#F49A9D", "#A4D3D0", "#96C498", "#F9DC98", "#DAB7E3"])),
-                    tooltip=["Topic", "Count"]
+                    tooltip=["Topic", "Percentage", "Count"]
                 )
 
                 text_pos = bars_pos.mark_text(
@@ -797,7 +805,7 @@ with tab3:
                     fontSize=14,
                     fontWeight="bold"
                 ).encode(
-                    text="Count:Q"
+                    text="label:N"
                 )
 
                 chart_pos = (bars_pos + text_pos).configure_legend(disable=True)
@@ -870,7 +878,7 @@ with tab3:
                 # Download hasil
                 st.markdown("---")
                 st.markdown("#### 📥 Download Positive Topic Prediction Result")
-                st.caption("Choose your preferred file format to download the results.")
+                st.write("Choose your preferred file format to download the results.")
 
                 df_topic_pos_result = df_pos[[col_name, "Predicted_Topic"]].copy()
                 df_topic_pos_result.columns = ["Text", "Predicted Topic"]
@@ -902,6 +910,4 @@ with tab3:
                     )
 
     else:
-
         st.warning("⚠️ Please run the topic prediction first.")
-

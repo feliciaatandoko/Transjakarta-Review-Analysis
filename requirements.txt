@@ -1,9 +1,6 @@
 pip install --upgrade pip
 streamlit
 pandas
-torch
-transformers
-sentence-transformers
 emoji
 wordcloud
 matplotlib

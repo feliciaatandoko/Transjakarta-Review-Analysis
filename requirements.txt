@@ -1,4 +1,4 @@
-pip install --upgrade pip
+!pip install --upgrade pip
 streamlit
 pandas
 emoji
@@ -7,3 +7,4 @@ matplotlib
 sastrawi
 openpyxl
 altair
+

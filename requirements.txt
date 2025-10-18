@@ -1,10 +1,7 @@
 !pip install --upgrade pip
 streamlit
 pandas
-emoji
-wordcloud
 matplotlib
-sastrawi
-openpyxl
 altair
+
 

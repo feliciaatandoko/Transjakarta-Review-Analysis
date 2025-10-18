@@ -2,6 +2,7 @@ streamlit
 pandas
 torch
 transformers
+sentence-transformers
 emoji
 wordcloud
 matplotlib
@@ -9,4 +10,5 @@ sastrawi
 bertopic
 nlp_id
 openpyxl
+
 altair

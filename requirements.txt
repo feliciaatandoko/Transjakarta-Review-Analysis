@@ -4,6 +4,7 @@ matplotlib
 torch
 transformers
 emoji
-wordcloud==1.9.2
+wordcloud
 altair
+
 

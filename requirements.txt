@@ -9,3 +9,4 @@ altair
 Sastrawi
 bertopic
 stanza
+openpyxl

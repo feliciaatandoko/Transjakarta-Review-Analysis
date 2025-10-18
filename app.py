@@ -13,7 +13,6 @@ from bertopic import BERTopic
 import stanza
 import io
 
-
 # ===============================
 # Konfigurasi halaman
 # ===============================
@@ -115,10 +114,8 @@ def remove_stopwords_topic(text):
 # ==============================
 @st.cache_resource
 def load_lemmatizer():
-    # from nlp_id.lemmatizer import Lemmatizer
     stanza.download('id', processors='tokenize,pos,lemma')
     nlp = stanza.Pipeline(lang='id', processors='tokenize,pos,lemma')
-    # return Lemmatizer()
     return nlp
 
 def lemmatize_text(nlp, text):
@@ -151,7 +148,7 @@ def predict_topic_neg(text):
 label_map_topic_neg = {
     -1: "Outlier",
     0: "Layanan Transjakarta",
-    1: "Sistem pembayaran: Tap in/out",
+    1: "Sistem pembayaran",
     2: "Waktu tunggu",
     3: "Ketersediaan armada",
     4: "Sistem pengumuman",
@@ -170,7 +167,7 @@ label_map_topic_net = {
     -1: "Outlier",
     0: "Panduan rute",
     1: "Jadwal operasional bus",
-    2: "Sistem pembayaran"
+    2: "Informasi sistem pembayaran"
 }
 
 # ==============================
@@ -274,26 +271,22 @@ with tab1:
                         df_net = df[df["Predicted_Label"] == "Netral"][[col_name, "cleaned_text"]].copy()
                         df_pos = df[df["Predicted_Label"] == "Positif"][[col_name, "cleaned_text"]].copy()
 
-                        # lemmatizer = load_lemmatizer()
                         nlp = load_lemmatizer()
 
                         if not df_neg.empty:
                             df_neg["stopword_removed"] = df_neg["cleaned_text"].apply(remove_stopwords_topic)
-                            # df_neg["lemmatized_text"] = df_neg["stopword_removed"].apply(lambda x: lemmatizer.lemmatize(x))
                             df_neg["lemmatized_text"] = df_neg["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
                             df_neg["Predicted_Topic"] = df_neg["lemmatized_text"].apply(lambda x: label_map_topic_neg[predict_topic_neg(x)])
                             st.session_state.df_neg_topic = df_neg
                         
                         if not df_net.empty:
                             df_net["stopword_removed"] = df_net["cleaned_text"].apply(remove_stopwords_topic)
-                            # df_net["lemmatized_text"] = df_net["stopword_removed"].apply(lambda x: lemmatizer.lemmatize(x))
                             df_net["lemmatized_text"] = df_net["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
                             df_net["Predicted_Topic"] = df_net["lemmatized_text"].apply(lambda x: label_map_topic_net[predict_topic_net(x)])
                             st.session_state.df_net_topic = df_net
 
                         if not df_pos.empty:
                             df_pos["stopword_removed"] = df_pos["cleaned_text"].apply(remove_stopwords_topic)
-                            # df_pos["lemmatized_text"] = df_pos["stopword_removed"].apply(lambda x: lemmatizer.lemmatize(x))
                             df_pos["lemmatized_text"] = df_pos["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
                             df_pos["Predicted_Topic"] = df_pos["lemmatized_text"].apply(lambda x: label_map_topic_pos[predict_topic_pos(x)])
                             st.session_state.df_pos_topic = df_pos
@@ -500,7 +493,7 @@ with tab3:
                 # Bar chart distribution
                 st.subheader("📈 Negative Topic Distribution")
                 st.write("📌 The topics below represent negative feedback & issues reported by Transjakarta users")
-                order_neg = ["Layanan Transjakarta", "Sistem pembayaran: Tap in/out", "Waktu tunggu", "Ketersediaan armada",
+                order_neg = ["Layanan Transjakarta", "Sistem pembayaran", "Waktu tunggu", "Ketersediaan armada",
                              "Sistem pengumuman", "Aplikasi Transjakarta", "Fasilitas halte"]
                 topic_counts_neg = (
                     df_neg["Predicted_Topic"]
@@ -515,10 +508,30 @@ with tab3:
                 topic_counts_neg["label"] = topic_counts_neg["Percentage"].astype(str) + "% (" + topic_counts_neg["Count"].astype(str) + ")"
 
                 bars_neg = alt.Chart(topic_counts_neg).mark_bar().encode(
-                    x=alt.X("Topic", sort=order_neg, axis=alt.Axis(labelAngle=0, labelFontSize=12, title=None)),
+                    x=alt.X(
+                        "Topic", 
+                        sort=order_neg,
+                        axis=alt.Axis(              
+                            labelAngle=0,           
+                            labelFontSize=12,
+                            title=None,
+                            labelLimit=0,           
+                            labelPadding=15,        
+                            labelBaseline="top"    
+                        )
+                    ),
                     y=alt.Y("Count", axis=alt.Axis(labelFontSize=12, title=None, tickMinStep=1)),
-                    color=alt.Color("Topic", scale=alt.Scale(domain=order_neg, range=["#8DAFC8", "#FEB989", "#F49A9D", "#A4D3D0", "#96C498", "#F9DC98", "#DAB7E3"])),
+                    color=alt.Color(
+                        "Topic", 
+                        scale=alt.Scale(
+                            domain=order_neg, 
+                            range=["#8DAFC8", "#FEB989", "#F49A9D", "#A4D3D0", "#96C498", "#F9DC98", "#DAB7E3"]
+                        )
+                    ),
                     tooltip=["Topic", "Percentage", "Count"]
+                ).properties(
+                    width=700,    
+                    height=400    
                 )
 
                 text_neg = bars_neg.mark_text(
@@ -538,7 +551,7 @@ with tab3:
                 # Word Cloud
                 topic_color_map_neg = {
                     "Layanan Transjakarta": "#8DAFC8",
-                    "Sistem pembayaran: Tap in/out": "#FEB989",
+                    "Sistem pembayaran": "#FEB989",
                     "Waktu tunggu": "#F49A9D",
                     "Ketersediaan armada": "#A4D3D0",
                     "Sistem pengumuman": "#96C498",
@@ -654,10 +667,24 @@ with tab3:
                 topic_counts_net["label"] = topic_counts_net["Percentage"].astype(str) + "% (" + topic_counts_net["Count"].astype(str) + ")"
 
                 bars_net = alt.Chart(topic_counts_net).mark_bar().encode(
-                    x=alt.X("Topic", sort=order_net, axis=alt.Axis(labelAngle=0, labelFontSize=12, title=None)),
+                    x=alt.X(
+                        "Topic", 
+                        sort=order_net,
+                        axis=alt.Axis(              
+                            labelAngle=0,          
+                            labelFontSize=12,
+                            title=None,
+                            labelLimit=0,           
+                            labelPadding=15,        
+                            labelBaseline="top"    
+                        )
+                    ),
                     y=alt.Y("Count", axis=alt.Axis(labelFontSize=12, title=None, tickMinStep=1)),
                     color=alt.Color("Topic", scale=alt.Scale(domain=order_net, range=["#8DAFC8", "#FEB989", "#DAB7E3"])),
                     tooltip=["Topic", "Percentage", "Count"]
+                ).properties(
+                    width=700,   
+                    height=400   
                 )
 
                 text_net = bars_net.mark_text(
@@ -792,10 +819,24 @@ with tab3:
                 topic_counts_pos["label"] = topic_counts_pos["Percentage"].astype(str) + "% (" + topic_counts_pos["Count"].astype(str) + ")"
 
                 bars_pos = alt.Chart(topic_counts_pos).mark_bar().encode(
-                    x=alt.X("Topic", sort=order_pos, axis=alt.Axis(labelAngle=0, labelFontSize=12, title=None)),
+                    x=alt.X(
+                        "Topic", 
+                        sort=order_pos,
+                        axis=alt.Axis(              
+                            labelAngle=0,           
+                            labelFontSize=12,
+                            title=None,
+                            labelLimit=0,           
+                            labelPadding=15,        
+                            labelBaseline="top"    
+                        )
+                    ),
                     y=alt.Y("Count", axis=alt.Axis(labelFontSize=12, title=None, tickMinStep=1)),
                     color=alt.Color("Topic", scale=alt.Scale(domain=order_pos, range=["#F49A9D", "#A4D3D0", "#96C498", "#F9DC98", "#DAB7E3"])),
                     tooltip=["Topic", "Percentage", "Count"]
+                ).properties(
+                    width=700,    
+                    height=400    
                 )
 
                 text_pos = bars_pos.mark_text(

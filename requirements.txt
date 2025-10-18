@@ -7,5 +7,6 @@ emoji
 wordcloud
 altair
 Sastrawi
+bertopic
 
 

@@ -32,8 +32,9 @@ st.caption("Upload Data -> Analyze Sentiment -> Analyze Topic")
 # ==============================
 @st.cache_resource
 def load_sentiment_model():
-    sentiment_model = BertForSequenceClassification.from_pretrained("model_indobert")
-    sentiment_tokenizer = BertTokenizer.from_pretrained("model_indobert")
+    repo_id = "feliciaatandoko/model_indobert"
+    sentiment_model = BertForSequenceClassification.from_pretrained(repo_id)
+    sentiment_tokenizer = BertTokenizer.from_pretrained(repo_id)
     return sentiment_model, sentiment_tokenizer
 
 sentiment_model, sentiment_tokenizer = load_sentiment_model()
@@ -886,4 +887,5 @@ with tab3:
                     )
 
     else:
+
         st.warning("⚠️ Please run the topic prediction first.")

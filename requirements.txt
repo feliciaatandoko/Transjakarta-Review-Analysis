@@ -10,5 +10,5 @@ sastrawi
 bertopic
 nlp_id
 openpyxl
-
 altair
+

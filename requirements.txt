@@ -5,3 +5,4 @@ torch
 transformers
 emoji
 wordcloud
+altair

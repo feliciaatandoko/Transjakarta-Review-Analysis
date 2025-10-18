@@ -6,5 +6,6 @@ transformers
 emoji
 wordcloud
 altair
+Sastrawi
 
 

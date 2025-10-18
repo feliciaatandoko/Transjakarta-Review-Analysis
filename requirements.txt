@@ -1,14 +1,12 @@
 pip install --upgrade pip
-streamlit==1.25.0
-pandas==2.1.0
-torch==2.2.0
-transformers==4.37.0
-sentence-transformers==2.2.2
-emoji==2.6.0
-wordcloud==1.9.2
-matplotlib==3.8.0
-Sastrawi==1.0.1
-bertopic==0.14.1
-nlp_id==0.1.0
-openpyxl==3.1.2
-altair==5.0.1
+streamlit
+pandas
+torch
+transformers
+sentence-transformers
+emoji
+wordcloud
+matplotlib
+sastrawi
+openpyxl
+altair

@@ -69,7 +69,7 @@ contraction_map = {
     "blm": "belum", "jg": "juga", "tp": "tapi", "trs": "terus", "krn": "karena",
     "klo": "kalau", "sm": "sama", "aj": "saja", "aja": "saja", "bgt": "banget",
     "gitu": "begitu", "kyk": "seperti", "tj": "transjakarta", "trnsjkt": "transjakarta",
-    "tije": "transjakarta", "jawabbb": "jawab"
+    "tije": "transjakarta", "jawabbb": "jawab", "app": "aplikasi", "apps": "aplikasi", "apk": "aplikasi"
 }
 
 def clean_text(text):
@@ -148,12 +148,12 @@ def predict_topic_neg(text):
 label_map_topic_neg = {
     -1: "Outlier",
     0: "Layanan Transjakarta",
-    1: "Sistem pembayaran",
-    2: "Waktu tunggu",
-    3: "Ketersediaan armada",
-    4: "Sistem pengumuman",
+    1: "Sistem Pembayaran",
+    2: "Waktu Tunggu",
+    3: "Ketersediaan Armada",
+    4: "Sistem Pengumuman",
     5: "Aplikasi Transjakarta",
-    6: "Fasilitas halte"
+    6: "Fasilitas Halte"
 }
 
 # ==============================
@@ -165,9 +165,9 @@ def predict_topic_net(text):
 
 label_map_topic_net = {
     -1: "Outlier",
-    0: "Panduan rute",
-    1: "Jadwal operasional bus",
-    2: "Informasi sistem pembayaran"
+    0: "Panduan Rute",
+    1: "Jadwal Operasional Bus",
+    2: "Informasi Sistem Pembayaran"
 }
 
 # ==============================
@@ -179,11 +179,11 @@ def predict_topic_pos(text):
 
 label_map_topic_pos = {
     -1: "Outlier",
-    0: "Kenyamanan transportasi dan supir",
-    1: "Apresiasi pelayanan petugas",
-    2: "Pengalaman positif layanan Transjakarta",
-    3: "Ekspresi pujian",
-    4: "Ekspansi rute dan mobilitas"
+    0: "Kenyamanan Transportasi dan Supir",
+    1: "Apresiasi Pelayanan Petugas",
+    2: "Pengalaman Positif Layanan Transjakarta",
+    3: "Ekspresi Pujian",
+    4: "Ekspansi Rute dan Mobilitas"
 }
 
 # ==============================
@@ -493,8 +493,8 @@ with tab3:
                 # Bar chart distribution
                 st.subheader("📈 Negative Topic Distribution")
                 st.write("📌 The topics below represent negative feedback & issues reported by Transjakarta users")
-                order_neg = ["Layanan Transjakarta", "Sistem pembayaran", "Waktu tunggu", "Ketersediaan armada",
-                             "Sistem pengumuman", "Aplikasi Transjakarta", "Fasilitas halte"]
+                order_neg = ["Layanan Transjakarta", "Sistem Pembayaran", "Waktu Tunggu", "Ketersediaan Armada",
+                             "Sistem Pengumuman", "Aplikasi Transjakarta", "Fasilitas Halte"]
                 topic_counts_neg = (
                     df_neg["Predicted_Topic"]
                     .value_counts()
@@ -551,12 +551,12 @@ with tab3:
                 # Word Cloud
                 topic_color_map_neg = {
                     "Layanan Transjakarta": "#8DAFC8",
-                    "Sistem pembayaran": "#FEB989",
-                    "Waktu tunggu": "#F49A9D",
-                    "Ketersediaan armada": "#A4D3D0",
-                    "Sistem pengumuman": "#96C498",
+                    "Sistem Pembayaran": "#FEB989",
+                    "Waktu Tunggu": "#F49A9D",
+                    "Ketersediaan Armada": "#A4D3D0",
+                    "Sistem Pengumuman": "#96C498",
                     "Aplikasi Transjakarta": "#F9DC98",
-                    "Fasilitas halte": "#DAB7E3"
+                    "Fasilitas Halte": "#DAB7E3"
                 }
                 
                 def generate_wordcloud_neg(texts, topic):
@@ -654,7 +654,7 @@ with tab3:
                 # Bar chart distribution
                 st.subheader("📈 Neutral Topic Distribution")
                 st.write("📌 The topics below represent feedback & inquiries from Transjakarta users")
-                order_net = ["Panduan rute", "Jadwal operasional bus", "Informasi sistem pembayaran"]
+                order_net = ["Panduan Rute", "Jadwal Operasional Bus", "Informasi Sistem Pembayaran"]
                 topic_counts_net = (
                     df_net["Predicted_Topic"]
                     .value_counts()
@@ -704,8 +704,8 @@ with tab3:
                 # Word Cloud
                 topic_color_map_net = {
                     "Panduan rute": "#8DAFC8",
-                    "Jadwal operasional bus": "#FEB989",
-                    "Informasi sistem pembayaran": "#DAB7E3"
+                    "Jadwal Operasional Bus": "#FEB989",
+                    "Informasi Sistem Pembayaran": "#DAB7E3"
                 }
                 
                 def generate_wordcloud_net(texts, topic):
@@ -804,8 +804,8 @@ with tab3:
                 # Bar chart distribution
                 st.subheader("📈 Positive Topic Distribution")
                 st.write("📌 The topics below represent positive feedback & appreciation from Transjakarta users")
-                order_pos = ["Kenyamanan transportasi dan supir", "Apresiasi pelayanan petugas",
-                             "Pengalaman positif layanan Transjakarta", "Ekspresi pujian", "Ekspansi rute dan mobilitas"]
+                order_pos = ["Kenyamanan Transportasi dan Supir", "Apresiasi Pelayanan Petugas",
+                             "Pengalaman Positif Layanan Transjakarta", "Ekspresi Pujian", "Ekspansi Rute dan Mobilitas"]
                 topic_counts_pos = (
                     df_pos["Predicted_Topic"]
                     .value_counts()
@@ -855,11 +855,11 @@ with tab3:
 
                 # Word Cloud
                 topic_color_map_pos = {
-                    "Kenyamanan transportasi dan supir": "#F49A9D",
-                    "Apresiasi pelayanan petugas": "#A4D3D0",
-                    "Pengalaman positif layanan Transjakarta": "#96C498",
-                    "Ekspresi pujian": "#F9DC98",
-                    "Ekspansi rute dan mobilitas": "#DAB7E3"
+                    "Kenyamanan Transportasi dan Supir": "#F49A9D",
+                    "Apresiasi Pelayanan Petugas": "#A4D3D0",
+                    "Pengalaman Positif Layanan Transjakarta": "#96C498",
+                    "Ekspresi Pujian": "#F9DC98",
+                    "Ekspansi Rute dan Mobilitas": "#DAB7E3"
                 }
                 
                 def generate_wordcloud_pos(texts, topic):
@@ -952,5 +952,3 @@ with tab3:
 
     else:
         st.warning("⚠️ Please run the topic prediction first.")
-
-

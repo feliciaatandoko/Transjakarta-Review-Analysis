@@ -232,6 +232,10 @@ with tab1:
     uploaded_file = st.file_uploader("Drag and drop your CSV file here", type=["csv"], accept_multiple_files=False)
     
     if uploaded_file is not None:
+        st.cache_data.clear()
+        if "uploaded_data" in st.session_state:
+            del st.session_state["uploaded_data"]
+
         df = pd.read_csv(uploaded_file)
 
         if df.shape[1] != 1:
@@ -347,7 +351,6 @@ with tab2:
         st.altair_chart(chart)
 
         # Word Cloud
-        @st.cache_data(show_spinner=False)
         def generate_wordcloud(texts, colormap, max_words):
             text_combined = " ".join(texts)
             
@@ -395,6 +398,7 @@ with tab2:
                 ax.axis("off")
 
         st.pyplot(fig)
+        plt.close(fig)
 
         # --- Dropdown untuk filter review berdasarkan sentiment ---
         st.markdown("### 🔍 Explore Reviews by Sentiment")
@@ -597,12 +601,14 @@ with tab3:
 
                         buf = io.BytesIO()
                         fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
+                        buf.seek(0)
                         
                         col1, col2, col3 = st.columns([1, 2, 1])
                         with col2:
                             st.markdown(f"""<div style='text-align:center; font-weight:600; font-size:20px'>
                                         Topic: {selected_topic} </div>""", unsafe_allow_html=True)
                             st.image(buf, use_container_width=True)
+                        plt.close(fig)
                     else:
                         st.info("No text data available for this topic.")
 
@@ -746,12 +752,14 @@ with tab3:
 
                         buf = io.BytesIO()
                         fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
+                        buf.seek(0)
                         
                         col1, col2, col3 = st.columns([1, 2, 1])
                         with col2:
                             st.markdown(f"""<div style='text-align:center; font-weight:600; font-size:20px'>
                                         Topic: {selected_topic} </div>""", unsafe_allow_html=True)
                             st.image(buf, use_container_width=True)
+                        plt.close(fig)
                     else:
                         st.info("No text data available for this topic.")
 
@@ -900,12 +908,14 @@ with tab3:
 
                         buf = io.BytesIO()
                         fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
+                        buf.seek(0)
                         
                         col1, col2, col3 = st.columns([1, 2, 1])
                         with col2:
                             st.markdown(f"""<div style='text-align:center; font-weight:600; font-size:20px'>
                                         Topic: {selected_topic} </div>""", unsafe_allow_html=True)
                             st.image(buf, use_container_width=True)
+                        plt.close(fig)
                     else:
                         st.info("No text data available for this topic.")
 
@@ -952,3 +962,4 @@ with tab3:
 
     else:
         st.warning("⚠️ Please run the topic prediction first.")
+

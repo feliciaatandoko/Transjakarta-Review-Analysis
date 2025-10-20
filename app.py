@@ -17,12 +17,12 @@ import io
 # Konfigurasi halaman
 # ===============================
 st.set_page_config(
-    page_title="🚍 Transjakarta Review Insight: Sentiment & Topic Analysis",
+    page_title="🚍 Transjakarta Review Insight",
     layout="wide",
 )
 
 # --- Header utama ---
-st.markdown("# 🚍 Transjakarta Review Insight: Sentiment & Topic Analysis")
+st.markdown("# 🚍 Transjakarta Review Insight")
 st.markdown("Analyze user reviews to uncover sentiment trends and popular discussion topics about Transjakarta")
 st.caption("Upload Data -> Analyze Sentiment -> Analyze Topic")
 
@@ -952,4 +952,5 @@ with tab3:
 
     else:
         st.warning("⚠️ Please run the topic prediction first.")
+
 

@@ -10,4 +10,5 @@ Sastrawi
 bertopic
 stanza
 openpyxl
+psutil
 

@@ -25,6 +25,9 @@ st.set_page_config(
 st.markdown("# 🚍 Transjakarta Review Insight")
 st.markdown("Analyze user reviews to uncover sentiment trends and popular discussion topics about Transjakarta")
 st.caption("Upload Data -> Analyze Sentiment -> Analyze Topic")
+import psutil, os
+mem = psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024)
+st.write(f"Current memory usage: {mem:.2f} MB")
 
 # ==============================
 # Load model & tokenizer
@@ -962,4 +965,5 @@ with tab3:
 
     else:
         st.warning("⚠️ Please run the topic prediction first.")
+
 

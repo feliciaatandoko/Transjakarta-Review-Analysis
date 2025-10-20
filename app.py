@@ -712,7 +712,7 @@ with tab3:
 
                 # Word Cloud
                 topic_color_map_net = {
-                    "Panduan rute": "#8DAFC8",
+                    "Panduan Rute": "#8DAFC8",
                     "Jadwal Operasional Bus": "#FEB989",
                     "Informasi Sistem Pembayaran": "#DAB7E3"
                 }
@@ -965,5 +965,6 @@ with tab3:
 
     else:
         st.warning("⚠️ Please run the topic prediction first.")
+
 
 

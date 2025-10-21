@@ -311,7 +311,8 @@ with tab1:
                         df_net = df[df["Predicted_Label"] == "Netral"][[col_name, "cleaned_text"]].copy()
                         df_pos = df[df["Predicted_Label"] == "Positif"][[col_name, "cleaned_text"]].copy()
 
-                        nlp = load_lemmatizer()
+                        # nlp = load_lemmatizer()
+                        stemmer = load_stemmer()
 
                         if not df_neg.empty:
                             df_neg["stopword_removed"] = df_neg["cleaned_text"].apply(remove_stopwords_topic)
@@ -998,5 +999,6 @@ with tab3:
     else:
 
         st.warning("⚠️ Please run the topic prediction first.")
+
 
 

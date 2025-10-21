@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import colorsys
 import time
 from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
+from Sastrawi.Stemmer.StemmerFactory import StemmerFactory
 import altair as alt
 from bertopic import BERTopic
 # import stanza
@@ -140,20 +141,30 @@ def remove_stopwords_topic(text):
 # ==============================
 # Lemmatization
 # ==============================
-@st.cache_resource
-def load_lemmatizer():
-    import stanza
-    stanza.download('id')
-    nlp = stanza.Pipeline(lang='id', processors='tokenize,pos,lemma')
-    return nlp
+# @st.cache_resource
+# def load_lemmatizer():
+#     import stanza
+#     stanza.download('id')
+#     nlp = stanza.Pipeline(lang='id', processors='tokenize,pos,lemma')
+#     return nlp
 
-def lemmatize_text(nlp, text):
-    doc = nlp(text)
-    lemmas = []
-    for sent in doc.sentences:
-        for word in sent.words:
-            lemmas.append(word.lemma)
-    return " ".join(lemmas)
+# def lemmatize_text(nlp, text):
+#     doc = nlp(text)
+#     lemmas = []
+#     for sent in doc.sentences:
+#         for word in sent.words:
+#             lemmas.append(word.lemma)
+#     return " ".join(lemmas)
+
+@st.cache_resource
+def load_stemmer():
+    factory = StemmerFactory()
+    return factory.create_stemmer()
+
+stemmer = load_stemmer()
+
+def lemmatize_text(text):
+    return stemmer.stem(text)
 
 # ==============================
 # Prediction function - sentiment
@@ -300,23 +311,27 @@ with tab1:
                         df_net = df[df["Predicted_Label"] == "Netral"][[col_name, "cleaned_text"]].copy()
                         df_pos = df[df["Predicted_Label"] == "Positif"][[col_name, "cleaned_text"]].copy()
 
-                        nlp = load_lemmatizer()
+                        # nlp = load_lemmatizer()
+                        stemmer = load_stemmer()
                         
                         if not df_neg.empty:
                             df_neg["stopword_removed"] = df_neg["cleaned_text"].apply(remove_stopwords_topic)
-                            df_neg["lemmatized_text"] = df_neg["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
+                            # df_neg["lemmatized_text"] = df_neg["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
+                            df_neg["lemmatized_text"] = df_neg["cleaned_text"].apply(lemmatize_text)
                             df_neg["Predicted_Topic"] = df_neg["lemmatized_text"].apply(lambda x: label_map_topic_neg[predict_topic_neg(x)])
                             st.session_state.df_neg_topic = df_neg
                         
                         if not df_net.empty:
                             df_net["stopword_removed"] = df_net["cleaned_text"].apply(remove_stopwords_topic)
-                            df_net["lemmatized_text"] = df_net["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
+                            # df_net["lemmatized_text"] = df_net["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
+                            df_net["lemmatized_text"] = df_net["cleaned_text"].apply(lemmatize_text)
                             df_net["Predicted_Topic"] = df_net["lemmatized_text"].apply(lambda x: label_map_topic_net[predict_topic_net(x)])
                             st.session_state.df_net_topic = df_net
 
                         if not df_pos.empty:
                             df_pos["stopword_removed"] = df_pos["cleaned_text"].apply(remove_stopwords_topic)
-                            df_pos["lemmatized_text"] = df_pos["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
+                            # df_pos["lemmatized_text"] = df_pos["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
+                            df_pos["lemmatized_text"] = df_pos["cleaned_text"].apply(lemmatize_text)
                             df_pos["Predicted_Topic"] = df_pos["lemmatized_text"].apply(lambda x: label_map_topic_pos[predict_topic_pos(x)])
                             st.session_state.df_pos_topic = df_pos
 
@@ -984,6 +999,7 @@ with tab3:
     else:
 
         st.warning("⚠️ Please run the topic prediction first.")
+
 
 
 

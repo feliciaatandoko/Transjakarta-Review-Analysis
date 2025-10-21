@@ -10,8 +10,37 @@ import time
 from Sastrawi.StopWordRemover.StopWordRemoverFactory import StopWordRemoverFactory
 import altair as alt
 from bertopic import BERTopic
+# from nlp_id.lemmatizer import Lemmatizer
 import stanza
 import io
+import os
+import psutil
+import shutil
+import logging
+
+# ===============================
+# Konfigurasi logging
+# ===============================
+logging.basicConfig(level=logging.INFO, format="%(message)s")
+
+# Resource Monitor
+def log_system_resource():
+    process = psutil.Process(os.getpid())
+    mem = process.memory_info().rss / (1024 * 1024)
+    cpu_percent = psutil.cpu_percent(interval=None)
+    total, used, free = shutil.disk_usage("/")
+    logging.info("\n===== STREAMLIT APP RESOURCE INFO =====")
+    logging.info(f"Current Memory Usage : {mem:.2f} MB")
+    logging.info(f"CPU Usage            : {cpu_percent:.2f}%")
+    logging.info(f"Storage Total        : {total / (1024**3):.2f} GB")
+    logging.info(f"Storage Used         : {used / (1024**3):.2f} GB")
+    logging.info(f"Storage Free         : {free / (1024**3):.2f} GB")
+    logging.info("========================================\n")
+
+# Jalankan log hanya sekali di awal sesi
+if "resource_logged" not in st.session_state:
+    log_system_resource()
+    st.session_state["resource_logged"] = True
 
 # ===============================
 # Konfigurasi halaman
@@ -25,16 +54,13 @@ st.set_page_config(
 st.markdown("# 🚍 Transjakarta Review Insight")
 st.markdown("Analyze user reviews to uncover sentiment trends and popular discussion topics about Transjakarta")
 st.caption("Upload Data -> Analyze Sentiment -> Analyze Topic")
-import psutil, os
-mem = psutil.Process(os.getpid()).memory_info().rss / (1024 * 1024)
-st.write(f"Current memory usage: {mem:.2f} MB")
 
 # ==============================
 # Load model & tokenizer
 # ==============================
 @st.cache_resource
 def load_sentiment_model():
-    repo_id = "feliciaatandoko/model_indobert"
+    repo_id = "ngela/indobert_sentiment_prediction"
     sentiment_model = BertForSequenceClassification.from_pretrained(repo_id)
     sentiment_tokenizer = BertTokenizer.from_pretrained(repo_id)
     return sentiment_model, sentiment_tokenizer
@@ -117,8 +143,10 @@ def remove_stopwords_topic(text):
 # ==============================
 @st.cache_resource
 def load_lemmatizer():
+    # from nlp_id.lemmatizer import Lemmatizer
     stanza.download('id', processors='tokenize,pos,lemma')
     nlp = stanza.Pipeline(lang='id', processors='tokenize,pos,lemma')
+    # return Lemmatizer()
     return nlp
 
 def lemmatize_text(nlp, text):
@@ -127,7 +155,7 @@ def lemmatize_text(nlp, text):
     for sent in doc.sentences:
         for word in sent.words:
             lemmas.append(word.lemma)
-    return " ".join(lemmas)
+    return " ".join(lemmas)
 
 # ==============================
 # Prediction function - sentiment
@@ -235,10 +263,6 @@ with tab1:
     uploaded_file = st.file_uploader("Drag and drop your CSV file here", type=["csv"], accept_multiple_files=False)
     
     if uploaded_file is not None:
-        st.cache_data.clear()
-        if "uploaded_data" in st.session_state:
-            del st.session_state["uploaded_data"]
-
         df = pd.read_csv(uploaded_file)
 
         if df.shape[1] != 1:
@@ -278,22 +302,26 @@ with tab1:
                         df_net = df[df["Predicted_Label"] == "Netral"][[col_name, "cleaned_text"]].copy()
                         df_pos = df[df["Predicted_Label"] == "Positif"][[col_name, "cleaned_text"]].copy()
 
+                        # lemmatizer = load_lemmatizer()
                         nlp = load_lemmatizer()
 
                         if not df_neg.empty:
                             df_neg["stopword_removed"] = df_neg["cleaned_text"].apply(remove_stopwords_topic)
+                            # df_neg["lemmatized_text"] = df_neg["stopword_removed"].apply(lambda x: lemmatizer.lemmatize(x))
                             df_neg["lemmatized_text"] = df_neg["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
                             df_neg["Predicted_Topic"] = df_neg["lemmatized_text"].apply(lambda x: label_map_topic_neg[predict_topic_neg(x)])
                             st.session_state.df_neg_topic = df_neg
                         
                         if not df_net.empty:
                             df_net["stopword_removed"] = df_net["cleaned_text"].apply(remove_stopwords_topic)
+                            # df_net["lemmatized_text"] = df_net["stopword_removed"].apply(lambda x: lemmatizer.lemmatize(x))
                             df_net["lemmatized_text"] = df_net["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
                             df_net["Predicted_Topic"] = df_net["lemmatized_text"].apply(lambda x: label_map_topic_net[predict_topic_net(x)])
                             st.session_state.df_net_topic = df_net
 
                         if not df_pos.empty:
                             df_pos["stopword_removed"] = df_pos["cleaned_text"].apply(remove_stopwords_topic)
+                            # df_pos["lemmatized_text"] = df_pos["stopword_removed"].apply(lambda x: lemmatizer.lemmatize(x))
                             df_pos["lemmatized_text"] = df_pos["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
                             df_pos["Predicted_Topic"] = df_pos["lemmatized_text"].apply(lambda x: label_map_topic_pos[predict_topic_pos(x)])
                             st.session_state.df_pos_topic = df_pos
@@ -301,10 +329,11 @@ with tab1:
                         st.session_state.topic_done = True
             else:
                 st.button("💡 Run Topic Prediction", disabled=True)
-                st.caption("⚠️ Please run sentiment prediction first to enable topic prediction.")
+                st.caption("⚠ Please run sentiment prediction first to enable topic prediction.")
 
             if st.session_state.topic_done:
                 st.success("✅ Topic prediction complete! Go to **Tab '💡 Topic Analysis'** to view results.")
+
 
 # ==============================
 # Tab 2 - Sentiment Results
@@ -354,6 +383,7 @@ with tab2:
         st.altair_chart(chart)
 
         # Word Cloud
+        @st.cache_data(show_spinner=False)
         def generate_wordcloud(texts, colormap, max_words):
             text_combined = " ".join(texts)
             
@@ -401,7 +431,6 @@ with tab2:
                 ax.axis("off")
 
         st.pyplot(fig)
-        plt.close(fig)
 
         # --- Dropdown untuk filter review berdasarkan sentiment ---
         st.markdown("### 🔍 Explore Reviews by Sentiment")
@@ -541,6 +570,7 @@ with tab3:
                     height=400    
                 )
 
+
                 text_neg = bars_neg.mark_text(
                     align="center",
                     baseline="bottom",
@@ -604,14 +634,12 @@ with tab3:
 
                         buf = io.BytesIO()
                         fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
-                        buf.seek(0)
                         
                         col1, col2, col3 = st.columns([1, 2, 1])
                         with col2:
                             st.markdown(f"""<div style='text-align:center; font-weight:600; font-size:20px'>
                                         Topic: {selected_topic} </div>""", unsafe_allow_html=True)
                             st.image(buf, use_container_width=True)
-                        plt.close(fig)
                     else:
                         st.info("No text data available for this topic.")
 
@@ -755,14 +783,12 @@ with tab3:
 
                         buf = io.BytesIO()
                         fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
-                        buf.seek(0)
                         
                         col1, col2, col3 = st.columns([1, 2, 1])
                         with col2:
                             st.markdown(f"""<div style='text-align:center; font-weight:600; font-size:20px'>
                                         Topic: {selected_topic} </div>""", unsafe_allow_html=True)
                             st.image(buf, use_container_width=True)
-                        plt.close(fig)
                     else:
                         st.info("No text data available for this topic.")
 
@@ -911,14 +937,12 @@ with tab3:
 
                         buf = io.BytesIO()
                         fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
-                        buf.seek(0)
                         
                         col1, col2, col3 = st.columns([1, 2, 1])
                         with col2:
                             st.markdown(f"""<div style='text-align:center; font-weight:600; font-size:20px'>
                                         Topic: {selected_topic} </div>""", unsafe_allow_html=True)
                             st.image(buf, use_container_width=True)
-                        plt.close(fig)
                     else:
                         st.info("No text data available for this topic.")
 
@@ -964,7 +988,5 @@ with tab3:
                     )
 
     else:
+
         st.warning("⚠️ Please run the topic prediction first.")
-
-
-

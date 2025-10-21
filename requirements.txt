@@ -9,5 +9,6 @@ altair
 Sastrawi
 bertopic
 openpyxl
+psutil
 
 

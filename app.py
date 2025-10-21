@@ -479,7 +479,7 @@ with tab2:
                 data=csv_sentiment,
                 file_name="Sentiment_Result.csv",
                 mime="text/csv",
-                width='stretch'
+                use_container_width=True
             )
 
         with col2:
@@ -488,7 +488,7 @@ with tab2:
                 data=excel_buffer,
                 file_name="Sentiment_Result.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                width='stretch'
+                use_container_width=True
             )
 
     else:
@@ -592,7 +592,7 @@ with tab3:
 
                 chart_neg = (bars_neg + text_neg).configure_legend(disable=True)
 
-                st.altair_chart(chart_neg, width='stretch')
+                st.altair_chart(chart_neg, use_container_width=True)
 
                 # Word Cloud
                 topic_color_map_neg = {
@@ -648,7 +648,7 @@ with tab3:
                         with col2:
                             st.markdown(f"""<div style='text-align:center; font-weight:600; font-size:20px'>
                                         Topic: {selected_topic} </div>""", unsafe_allow_html=True)
-                            st.image(buf, width='stretch')
+                            st.image(buf, use_container_width=True)
                     else:
                         st.info("No text data available for this topic.")
 
@@ -680,7 +680,7 @@ with tab3:
                         data=csv_topic_neg,
                         file_name="Negative_Topic_Result.csv",
                         mime="text/csv",
-                        width='stretch'
+                        use_container_width=True
                     )
 
                 with col2:
@@ -689,7 +689,7 @@ with tab3:
                         data=excel_buffer_neg,
                         file_name="Negative_Topic_Result.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        width='stretch'
+                        use_container_width=True
                     )
 
         # ======= Tab Netral =======
@@ -745,7 +745,7 @@ with tab3:
 
                 chart_net = (bars_net + text_net).configure_legend(disable=True)
 
-                st.altair_chart(chart_net, width='stretch')
+                st.altair_chart(chart_net, use_container_width=True)
 
                 # Word Cloud
                 topic_color_map_net = {
@@ -797,7 +797,7 @@ with tab3:
                         with col2:
                             st.markdown(f"""<div style='text-align:center; font-weight:600; font-size:20px'>
                                         Topic: {selected_topic} </div>""", unsafe_allow_html=True)
-                            st.image(buf, width='stretch')
+                            st.image(buf, use_container_width=True)
                     else:
                         st.info("No text data available for this topic.")
 
@@ -830,7 +830,7 @@ with tab3:
                         data=csv_topic_net,
                         file_name="Neutral_Topic_Result.csv",
                         mime="text/csv",
-                        width='stretch'
+                        use_container_width=True
                     )
 
                 with col2:
@@ -839,7 +839,7 @@ with tab3:
                         data=excel_buffer_net,
                         file_name="Neutral_Topic_Result.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        width='stretch'
+                        use_container_width=True
                     )
         
         # ======= Tab Positif =======
@@ -897,7 +897,7 @@ with tab3:
 
                 chart_pos = (bars_pos + text_pos).configure_legend(disable=True)
 
-                st.altair_chart(chart_pos, width='stretch')
+                st.altair_chart(chart_pos, use_container_width=True)
 
                 # Word Cloud
                 topic_color_map_pos = {
@@ -951,7 +951,7 @@ with tab3:
                         with col2:
                             st.markdown(f"""<div style='text-align:center; font-weight:600; font-size:20px'>
                                         Topic: {selected_topic} </div>""", unsafe_allow_html=True)
-                            st.image(buf, width='stretch')
+                            st.image(buf, use_container_width=True)
                     else:
                         st.info("No text data available for this topic.")
 
@@ -984,7 +984,7 @@ with tab3:
                         data=csv_topic_pos,
                         file_name="Positive_Topic_Result.csv",
                         mime="text/csv",
-                        width='stretch'
+                        use_container_width=True
                     )
 
                 with col2:
@@ -993,12 +993,13 @@ with tab3:
                         data=excel_buffer_pos,
                         file_name="Positive_Topic_Result.xlsx",
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                        width='stretch'
+                        use_container_width=True
                     )
 
     else:
 
         st.warning("⚠️ Please run the topic prediction first.")
+
 
 
 

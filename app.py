@@ -317,21 +317,21 @@ with tab1:
                         if not df_neg.empty:
                             df_neg["stopword_removed"] = df_neg["cleaned_text"].apply(remove_stopwords_topic)
                             # df_neg["lemmatized_text"] = df_neg["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
-                            df_neg["lemmatized_text"] = df_neg["cleaned_text"].apply(lemmatize_text)
+                            df_neg["lemmatized_text"] = df_neg["stopword_removed"].apply(lemmatize_text)
                             df_neg["Predicted_Topic"] = df_neg["lemmatized_text"].apply(lambda x: label_map_topic_neg[predict_topic_neg(x)])
                             st.session_state.df_neg_topic = df_neg
                         
                         if not df_net.empty:
                             df_net["stopword_removed"] = df_net["cleaned_text"].apply(remove_stopwords_topic)
                             # df_net["lemmatized_text"] = df_net["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
-                            df_net["lemmatized_text"] = df_net["cleaned_text"].apply(lemmatize_text)
+                            df_net["lemmatized_text"] = df_net["stopword_removed"].apply(lemmatize_text)
                             df_net["Predicted_Topic"] = df_net["lemmatized_text"].apply(lambda x: label_map_topic_net[predict_topic_net(x)])
                             st.session_state.df_net_topic = df_net
 
                         if not df_pos.empty:
                             df_pos["stopword_removed"] = df_pos["cleaned_text"].apply(remove_stopwords_topic)
                             # df_pos["lemmatized_text"] = df_pos["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
-                            df_pos["lemmatized_text"] = df_pos["cleaned_text"].apply(lemmatize_text)
+                            df_pos["lemmatized_text"] = df_pos["stopword_removed"].apply(lemmatize_text)
                             df_pos["Predicted_Topic"] = df_pos["lemmatized_text"].apply(lambda x: label_map_topic_pos[predict_topic_pos(x)])
                             st.session_state.df_pos_topic = df_pos
 

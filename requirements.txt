@@ -8,6 +8,6 @@ wordcloud
 altair
 Sastrawi
 bertopic
-stanza
 openpyxl
+
 

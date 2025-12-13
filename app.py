@@ -53,7 +53,52 @@ st.set_page_config(
 # --- Header utama ---
 st.markdown("# 🚍 Transjakarta Review Insight")
 st.markdown("Analyze user reviews to uncover sentiment trends and popular discussion topics about Transjakarta")
-st.caption("Upload Data -> Analyze Sentiment -> Analyze Topic")
+
+with st.expander("💡 How to use this application"):
+    st.markdown("""
+        <style>
+        ol {margin-left: 1em; padding-left: 0.5em;}
+        ol li {margin-bottom: 0.3em;}
+        ol li b {display: inline;}
+        ul {margin-top: 0.2em; margin-bottom: 0.4em;}
+        </style>
+
+        <ol>
+        <li><b>Upload Your Data</b>
+            <ul>
+            <li>Go to the '📁 Upload Data' tab and upload your CSV file.</li>
+            <li>Make sure the file contains only one text column. If there’s more than one column, the process will result in an error.</li>
+            </ul>
+        </li>
+
+        <li><b>Run the Predictions</b>
+            <ul>
+            <li>Click "Run Sentiment Prediction" and "Run Topic Prediction" below the data preview table.</li>
+            <li>Make sure to run the sentiment prediction first before running the topic prediction.</li>
+            </ul>
+        </li>
+
+        <li><b>Explore Sentiment Results</b>
+            <ul>
+            <li>Go to the '📊 Sentiment Analysis' tab to explore the prediction results.</li>
+            <li>You can view predicted results in a table, sentiment distribution bar chart, and word clouds for each sentiment.</li>
+            </ul>
+        </li>
+
+        <li><b>Explore Topic Results</b>
+            <ul>
+            <li>Go to the '💡 Topic Analysis' tab to see which topics are most frequently discussed within each sentiment.</li>
+            <li>You can view predicted results in a table, topic distribution bar chart, and word clouds for each topic.</li>
+            </ul>
+        </li>
+
+        <li><b>Download the Results</b>
+            <ul>
+            <li>At the bottom of each results tab, you can download the prediction outputs in CSV or Excel format.</li>
+            </ul>
+        </li>
+        </ol>
+        """, unsafe_allow_html=True)
 
 # ==============================
 # Load model & tokenizer
@@ -123,8 +168,8 @@ def clean_text(text):
 factory = StopWordRemoverFactory()
 stopwords_list = factory.get_stop_words()
 stopword_remover = factory.create_stop_word_remover()
-additional_stopwords = ["yang", "nya", "ya", "udah", "min", "apa"]
-additional_stopwords_topic = ["yang", "nya", "ya", "udah", "min", "apa", "transjakarta"]
+additional_stopwords = ["yang", "nya", "ya", "udah", "min", "apa", "sih", "deh", "nih", "loh", "kan"]
+additional_stopwords_topic = ["yang", "nya", "ya", "udah", "min", "apa", "transjakarta", "sih", "deh", "nih", "loh", "kan"]
 
 def remove_stopwords(text):
     tokens = text.split()
@@ -221,8 +266,8 @@ label_map_topic_pos = {
     -1: "Outlier",
     0: "Kenyamanan Transportasi dan Supir",
     1: "Apresiasi Pelayanan Petugas",
-    2: "Pengalaman Positif Layanan Transjakarta",
-    3: "Ekspresi Pujian",
+    2: "Pengalaman Positif Pengguna",
+    3: "Ekspresi Pujian Singkat",
     4: "Ekspansi Rute dan Mobilitas"
 }
 
@@ -267,9 +312,15 @@ tab1, tab2, tab3 = st.tabs([
 # ==============================
 with tab1:
     st.subheader("📁 Upload Data")
-    st.info("Upload a **.csv** file with **one text column** of user reviews")
+    st.info("📤 Upload a **.csv** file with **one text column** of user reviews")
 
     uploaded_file = st.file_uploader("Drag and drop your CSV file here", type=["csv"], accept_multiple_files=False)
+
+    if uploaded_file is None and st.session_state.uploaded_data is not None:
+        st.session_state.uploaded_data = None
+        st.session_state.sentiment_done = False
+        st.session_state.topic_done = False
+        st.warning("⚠️ The CSV file has been removed. Please upload a new file.")
     
     if uploaded_file is not None:
         df = pd.read_csv(uploaded_file)
@@ -280,68 +331,81 @@ with tab1:
             col_name = df.columns[0]
             
             st.session_state.uploaded_data = df
-            st.success(f"File `{uploaded_file.name}` uploaded successfully!\n\n"
-                       f"Total reviews uploaded: **{len(df):,} rows**")
+            st.success(f"✅ File `{uploaded_file.name}` uploaded successfully!")
 
             st.write("### 📋 Data Preview")
+            st.write(f"Total reviews uploaded: **{len(df):,} rows**")
             st.dataframe(df.head(10))
 
-            # --- Tombol Sentiment ---
-            if st.button("🔍 Run Sentiment Prediction"):
-                with st.spinner("⏳ Running sentiment analysis... please wait..."):
-                    df = st.session_state.uploaded_data
-                    df["cleaned_text"] = df[col_name].apply(clean_text)
-                    df["stopword_removed"] = df["cleaned_text"].apply(remove_stopwords)
-                    df["Predicted_Label"] = df["cleaned_text"].apply(lambda x: label_map[predict_sentiment(x)])
+            col1, spacer, col2 = st.columns([2,0.2,2])
 
-                    st.session_state.sentiment_result = df
-                    st.session_state.sentiment_done = True
-                    st.session_state.topic_done = False
+            with col1:
+                # --- Tombol Sentiment ---
+                if st.button("🔍 Run Sentiment Prediction"):
+                    with st.spinner("⏳ Running sentiment analysis... Please wait..."):
+                        df = st.session_state.uploaded_data
+                        df["cleaned_text"] = df[col_name].apply(clean_text)
+                        df["stopword_removed"] = df["cleaned_text"].apply(remove_stopwords)
+                        df["Predicted_Label"] = df["cleaned_text"].apply(lambda x: label_map[predict_sentiment(x)])
 
-            if st.session_state.sentiment_done:
-                st.success("✅ Sentiment prediction complete! Go to **Tab '📊 Sentiment Analysis'** to view results.")
+                        st.session_state.sentiment_result = df
+                        st.session_state.sentiment_done = True
+                        st.session_state.topic_done = False
 
-            # --- Tombol Topic ---
-            if st.session_state.sentiment_done:
-                if st.button("💡 Run Topic Prediction"):
-                    with st.spinner("⏳ Generating topic clusters... please wait..."):
-                        df = st.session_state.sentiment_result
+                if st.session_state.sentiment_done:
+                    st.success("""✅ Sentiment prediction complete!
+                               Go to **Tab '📊 Sentiment Analysis'** to view results.""")
+                
+                else:
+                    st.caption("Click the button above to start sentiment prediction.")
+            
+            with col2:
+                # --- Tombol Topic ---
+                if st.session_state.sentiment_done:
+                    if st.button("💡 Run Topic Prediction"):
+                        with st.spinner("⏳ Generating topic clusters... Please wait..."):
+                            df = st.session_state.sentiment_result
 
-                        df_neg = df[df["Predicted_Label"] == "Negatif"][[col_name, "cleaned_text"]].copy()
-                        df_net = df[df["Predicted_Label"] == "Netral"][[col_name, "cleaned_text"]].copy()
-                        df_pos = df[df["Predicted_Label"] == "Positif"][[col_name, "cleaned_text"]].copy()
+                            df_neg = df[df["Predicted_Label"] == "Negatif"][[col_name, "cleaned_text"]].copy()
+                            df_net = df[df["Predicted_Label"] == "Netral"][[col_name, "cleaned_text"]].copy()
+                            df_pos = df[df["Predicted_Label"] == "Positif"][[col_name, "cleaned_text"]].copy()
 
-                        # nlp = load_lemmatizer()
-                        stemmer = load_stemmer()
-                        
-                        if not df_neg.empty:
-                            df_neg["stopword_removed"] = df_neg["cleaned_text"].apply(remove_stopwords_topic)
-                            # df_neg["lemmatized_text"] = df_neg["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
-                            df_neg["lemmatized_text"] = df_neg["stopword_removed"].apply(lemmatize_text)
-                            df_neg["Predicted_Topic"] = df_neg["lemmatized_text"].apply(lambda x: label_map_topic_neg[predict_topic_neg(x)])
-                            st.session_state.df_neg_topic = df_neg
-                        
-                        if not df_net.empty:
-                            df_net["stopword_removed"] = df_net["cleaned_text"].apply(remove_stopwords_topic)
-                            # df_net["lemmatized_text"] = df_net["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
-                            df_net["lemmatized_text"] = df_net["stopword_removed"].apply(lemmatize_text)
-                            df_net["Predicted_Topic"] = df_net["lemmatized_text"].apply(lambda x: label_map_topic_net[predict_topic_net(x)])
-                            st.session_state.df_net_topic = df_net
+                            # nlp = load_lemmatizer()
+                            stemmer = load_stemmer()
+                            
+                            if not df_neg.empty:
+                                df_neg["stopword_removed"] = df_neg["cleaned_text"].apply(remove_stopwords_topic)
+                                # df_neg["lemmatized_text"] = df_neg["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
+                                df_neg["lemmatized_text"] = df_neg["stopword_removed"].apply(lemmatize_text)
+                                df_neg["Predicted_Topic"] = df_neg["lemmatized_text"].apply(lambda x: label_map_topic_neg[predict_topic_neg(x)])
+                                st.session_state.df_neg_topic = df_neg
+                            
+                            if not df_net.empty:
+                                df_net["stopword_removed"] = df_net["cleaned_text"].apply(remove_stopwords_topic)
+                                # df_net["lemmatized_text"] = df_net["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
+                                df_net["lemmatized_text"] = df_net["stopword_removed"].apply(lemmatize_text)
+                                df_net["Predicted_Topic"] = df_net["lemmatized_text"].apply(lambda x: label_map_topic_net[predict_topic_net(x)])
+                                st.session_state.df_net_topic = df_net
 
-                        if not df_pos.empty:
-                            df_pos["stopword_removed"] = df_pos["cleaned_text"].apply(remove_stopwords_topic)
-                            # df_pos["lemmatized_text"] = df_pos["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
-                            df_pos["lemmatized_text"] = df_pos["stopword_removed"].apply(lemmatize_text)
-                            df_pos["Predicted_Topic"] = df_pos["lemmatized_text"].apply(lambda x: label_map_topic_pos[predict_topic_pos(x)])
-                            st.session_state.df_pos_topic = df_pos
+                            if not df_pos.empty:
+                                df_pos["stopword_removed"] = df_pos["cleaned_text"].apply(remove_stopwords_topic)
+                                # df_pos["lemmatized_text"] = df_pos["stopword_removed"].apply(lambda x: lemmatize_text(nlp, x))
+                                df_pos["lemmatized_text"] = df_pos["stopword_removed"].apply(lemmatize_text)
+                                df_pos["Predicted_Topic"] = df_pos["lemmatized_text"].apply(lambda x: label_map_topic_pos[predict_topic_pos(x)])
+                                st.session_state.df_pos_topic = df_pos
 
-                        st.session_state.topic_done = True
-            else:
-                st.button("💡 Run Topic Prediction", disabled=True)
-                st.caption("⚠ Please run sentiment prediction first to enable topic prediction.")
+                            st.session_state.topic_done = True
 
-            if st.session_state.topic_done:
-                st.success("✅ Topic prediction complete! Go to **Tab '💡 Topic Analysis'** to view results.")
+                    else:
+                        st.caption("Click the button above to start topic prediction.")
+
+                else:
+                    st.button("💡 Run Topic Prediction", disabled=True)
+                    st.caption("⚠ Please run sentiment prediction first to enable topic prediction.")
+
+                if st.session_state.topic_done:
+                    st.success("""✅ Topic prediction complete!
+                               Go to **Tab '💡 Topic Analysis'** to view results.""")
 
 
 # ==============================
@@ -353,8 +417,14 @@ with tab2:
 
         # Show table
         st.subheader("📊 Sentiment Prediction Results")
-        st.write("Showing top 10 rows. Explore full results by sentiment below ⬇️")
-        st.dataframe(df[[col_name, "Predicted_Label"]].head(10))
+        view_option = st.pills("Select view mode", options=["Top 10", "All Data"], selection_mode="single", default="Top 10")
+        
+        if view_option == "Top 10":
+            st.write("Showing top 10 rows. Explore full results by sentiment below ⬇️")
+            st.dataframe(df[[col_name, "Predicted_Label"]].head(10))
+        else:
+            st.write("Showing all rows. Explore full results by sentiment below ⬇️")
+            st.dataframe(df[[col_name, "Predicted_Label"]])
 
         # Bar chart distribution
         st.subheader("📈 Sentiment Distribution")
@@ -369,6 +439,8 @@ with tab2:
 
         sentiment_counts["Percentage"] = ((sentiment_counts["Count"] / sentiment_counts["Count"].sum() * 100).round()).astype(int)
         sentiment_counts["label"] = sentiment_counts["Percentage"].astype(str) + "% (" + sentiment_counts["Count"].astype(str) + ")"
+
+        sentiment_counts = sentiment_counts[sentiment_counts["Count"] > 0]
 
         bars = alt.Chart(sentiment_counts).mark_bar().encode(
             x=alt.X("Sentiment", sort=order, axis=alt.Axis(labelAngle=0, labelFontSize=18, title=None)),
@@ -419,7 +491,17 @@ with tab2:
 
         # Menampilkan WordCloud per sentimen
         st.subheader("☁️ Sentiment Word Cloud")
-        max_words = 50
+
+        col1, col2, col3 = st.columns([1, 1, 1])
+        with col2:
+            max_words = st.slider(
+                "Adjust the number of words to display:",
+                min_value=10,
+                max_value=50,
+                value=30,
+                step=5,
+                key="max_words_sentiment"
+            )
 
         fig, axes = plt.subplots(1, 3, figsize=(15, 5))
 
@@ -441,12 +523,28 @@ with tab2:
 
         st.pyplot(fig)
 
+        col1, col2, col3 = st.columns([1,1,0.5])
+        with col2:
+            with st.popover("💡 How to read the Word Cloud"):
+                st.markdown("""
+                **Quick Guide:**
+                - Word size indicates **frequency of occurrence** in the reviews.
+                - The larger the word, the more frequently it appears.
+                - Colors have no specific meaning, they’re just for visualization.
+                - Use the word cloud to identify which words stand out the most in each sentiment.
+                """)
+
         # --- Dropdown untuk filter review berdasarkan sentiment ---
         st.markdown("### 🔍 Explore Reviews by Sentiment")
 
         # Get available sentiments from predicted labels
         available_sentiments = df["Predicted_Label"].unique()
-        selected_sentiment = st.selectbox("Select sentiment to view results", available_sentiments, index=0)
+        sentiment_order = ["Negatif", "Netral", "Positif"]
+        ordered_sentiments = [s for s in sentiment_order if s in available_sentiments]
+
+        # selected_sentiment = st.selectbox("Select sentiment to view results", available_sentiments, index=0)
+        selected_sentiment = st.pills("Select sentiment to view results", options=ordered_sentiments,
+                                      selection_mode="single", default=ordered_sentiments[0])
 
         # Filter reviews based on the selected sentiment
         filtered_reviews = df[df["Predicted_Label"] == selected_sentiment][[col_name]].dropna()
@@ -522,10 +620,17 @@ with tab3:
 
         df_all = pd.concat([df_neg, df_net, df_pos], ignore_index=False).sort_index().reset_index()
 
-        st.write("Showing top 10 rows. Explore all topic clusters per sentiment using the tabs below ⬇️")
-        st.dataframe(df_all[[col_name, "Sentiment", "Predicted_Topic"]].head(10))
+        # Show table
+        view_option_topic = st.pills("Select view mode", options=["Top 10", "All Data"], selection_mode="single", default="Top 10", key="view_opt_topic")
+        
+        if view_option_topic == "Top 10":
+            st.write("Showing top 10 rows. Explore all topic clusters per sentiment using the tabs below ⬇️")
+            st.dataframe(df_all[[col_name, "Sentiment", "Predicted_Topic"]].head(10))
+        else:
+            st.write("Showing all rows. Explore all topic clusters per sentiment using the tabs below ⬇️")
+            st.dataframe(df_all[[col_name, "Sentiment", "Predicted_Topic"]])
 
-        st.caption("")
+        # st.caption("")
         st.write("Select a sentiment tab below to explore topic clusters.")
         # Buat nested tabs per sentiment
         topic_tabs = st.tabs(["🔴 Negative", "🔵 Neutral", "🟢 Positive"])
@@ -551,6 +656,8 @@ with tab3:
 
                 topic_counts_neg["Percentage"] = ((topic_counts_neg["Count"] / topic_counts_neg["Count"].sum() * 100).round()).astype(int)
                 topic_counts_neg["label"] = topic_counts_neg["Percentage"].astype(str) + "% (" + topic_counts_neg["Count"].astype(str) + ")"
+
+                topic_counts_neg = topic_counts_neg[topic_counts_neg["Count"] > 0]
 
                 bars_neg = alt.Chart(topic_counts_neg).mark_bar().encode(
                     x=alt.X(
@@ -578,7 +685,6 @@ with tab3:
                     width=700,    
                     height=400    
                 )
-
 
                 text_neg = bars_neg.mark_text(
                     align="center",
@@ -615,7 +721,7 @@ with tab3:
                         height=250, 
                         background_color="white", 
                         color_func=color_func,                        
-                        max_words=30
+                        max_words=max_words
                     ).generate(text_combined)
                     
                     return wc
@@ -630,10 +736,22 @@ with tab3:
                         key="topic_neg"
                         )
                     
-                    topic_texts = df_neg[df_neg["Predicted_Topic"] == selected_topic]["lemmatized_text"].tolist()
-
                     st.caption("")
                     st.markdown("#### ☁️ Negative Topic Word Cloud")
+                    
+                    col1, col2, col3 = st.columns([1,1,1])
+
+                    with col2:
+                        max_words = st.slider(
+                            "Adjust the number of words to display:",
+                            min_value=20,
+                            max_value=50,
+                            value=30,
+                            step=5,
+                            key="max_words_neg"
+                        )
+                    
+                    topic_texts = df_neg[df_neg["Predicted_Topic"] == selected_topic]["lemmatized_text"].tolist()
 
                     if len(topic_texts) > 0:
                         wc = generate_wordcloud_neg(topic_texts, selected_topic)
@@ -644,11 +762,24 @@ with tab3:
                         buf = io.BytesIO()
                         fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
                         
-                        col1, col2, col3 = st.columns([1, 2, 1])
+                        col1, col2, col3 = st.columns([1.5, 2, 1.5])
                         with col2:
                             st.markdown(f"""<div style='text-align:center; font-weight:600; font-size:20px'>
                                         Topic: {selected_topic} </div>""", unsafe_allow_html=True)
                             st.image(buf, use_container_width=True)
+
+                            col1, col2, col3 = st.columns([0.8, 2, 0.4])
+
+                            with col2:
+                                with st.popover("💡 How to read the Word Cloud"):
+                                    st.markdown("""
+                                    **Quick Guide:**
+                                    - Word size indicates **frequency of occurrence** in the reviews.
+                                    - The larger the word, the more frequently it appears.
+                                    - Colors have no specific meaning, they’re just for visualization.
+                                    - Use the word cloud to identify which words stand out the most in each topic.
+                                    """)
+
                     else:
                         st.info("No text data available for this topic.")
 
@@ -712,6 +843,8 @@ with tab3:
                 topic_counts_net["Percentage"] = ((topic_counts_net["Count"] / topic_counts_net["Count"].sum() * 100).round()).astype(int)
                 topic_counts_net["label"] = topic_counts_net["Percentage"].astype(str) + "% (" + topic_counts_net["Count"].astype(str) + ")"
 
+                topic_counts_net = topic_counts_net[topic_counts_net["Count"] > 0]
+
                 bars_net = alt.Chart(topic_counts_net).mark_bar().encode(
                     x=alt.X(
                         "Topic", 
@@ -764,7 +897,7 @@ with tab3:
                         height=250, 
                         background_color="white", 
                         color_func=color_func,                        
-                        max_words=30
+                        max_words=max_words
                     ).generate(text_combined)
                     
                     return wc
@@ -779,10 +912,22 @@ with tab3:
                         key="topic_net"
                         )
                     
-                    topic_texts = df_net[df_net["Predicted_Topic"] == selected_topic]["lemmatized_text"].tolist()
-
                     st.caption("")
                     st.markdown("#### ☁️ Neutral Topic Word Cloud")
+                    
+                    col1, col2, col3 = st.columns([1,1,1])
+                    
+                    with col2:
+                        max_words = st.slider(
+                            "Adjust the number of words to display:",
+                            min_value=20,
+                            max_value=50,
+                            value=30,
+                            step=5,
+                            key="max_words_net"
+                        )
+                    
+                    topic_texts = df_net[df_net["Predicted_Topic"] == selected_topic]["lemmatized_text"].tolist()
 
                     if len(topic_texts) > 0:
                         wc = generate_wordcloud_net(topic_texts, selected_topic)
@@ -793,11 +938,24 @@ with tab3:
                         buf = io.BytesIO()
                         fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
                         
-                        col1, col2, col3 = st.columns([1, 2, 1])
+                        col1, col2, col3 = st.columns([1.5, 2, 1.5])
                         with col2:
                             st.markdown(f"""<div style='text-align:center; font-weight:600; font-size:20px'>
                                         Topic: {selected_topic} </div>""", unsafe_allow_html=True)
                             st.image(buf, use_container_width=True)
+
+                            col1, col2, col3 = st.columns([0.8, 2, 0.4])
+
+                            with col2:
+                                with st.popover("💡 How to read the Word Cloud"):
+                                    st.markdown("""
+                                    **Quick Guide:**
+                                    - Word size indicates **frequency of occurrence** in the reviews.
+                                    - The larger the word, the more frequently it appears.
+                                    - Colors have no specific meaning, they’re just for visualization.
+                                    - Use the word cloud to identify which words stand out the most in each topic.
+                                    """)
+
                     else:
                         st.info("No text data available for this topic.")
 
@@ -851,7 +1009,7 @@ with tab3:
                 st.subheader("📈 Positive Topic Distribution")
                 st.write("📌 The topics below represent positive feedback & appreciation from Transjakarta users")
                 order_pos = ["Kenyamanan Transportasi dan Supir", "Apresiasi Pelayanan Petugas",
-                             "Pengalaman Positif Layanan Transjakarta", "Ekspresi Pujian", "Ekspansi Rute dan Mobilitas"]
+                             "Pengalaman Positif Pengguna", "Ekspresi Pujian Singkat", "Ekspansi Rute dan Mobilitas"]
                 topic_counts_pos = (
                     df_pos["Predicted_Topic"]
                     .value_counts()
@@ -863,6 +1021,8 @@ with tab3:
 
                 topic_counts_pos["Percentage"] = ((topic_counts_pos["Count"] / topic_counts_pos["Count"].sum() * 100).round()).astype(int)
                 topic_counts_pos["label"] = topic_counts_pos["Percentage"].astype(str) + "% (" + topic_counts_pos["Count"].astype(str) + ")"
+
+                topic_counts_pos = topic_counts_pos[topic_counts_pos["Count"] > 0]
 
                 bars_pos = alt.Chart(topic_counts_pos).mark_bar().encode(
                     x=alt.X(
@@ -903,8 +1063,8 @@ with tab3:
                 topic_color_map_pos = {
                     "Kenyamanan Transportasi dan Supir": "#F49A9D",
                     "Apresiasi Pelayanan Petugas": "#A4D3D0",
-                    "Pengalaman Positif Layanan Transjakarta": "#96C498",
-                    "Ekspresi Pujian": "#F9DC98",
+                    "Pengalaman Positif Pengguna": "#96C498",
+                    "Ekspresi Pujian Singkat": "#F9DC98",
                     "Ekspansi Rute dan Mobilitas": "#DAB7E3"
                 }
                 
@@ -918,7 +1078,7 @@ with tab3:
                         height=250, 
                         background_color="white", 
                         color_func=color_func,                        
-                        max_words=30
+                        max_words=max_words
                     ).generate(text_combined)
                     
                     return wc
@@ -933,10 +1093,22 @@ with tab3:
                         key="topic_pos"
                         )
                     
-                    topic_texts = df_pos[df_pos["Predicted_Topic"] == selected_topic]["lemmatized_text"].tolist()
-
                     st.caption("")
                     st.markdown("#### ☁️ Positive Topic Word Cloud")
+                    
+                    col1, col2, col3 = st.columns([1,1,1])
+                    
+                    with col2:
+                        max_words = st.slider(
+                            "Adjust the number of words to display:",
+                            min_value=20,
+                            max_value=50,
+                            value=30,
+                            step=5,
+                            key="max_words_pos"
+                        )
+                    
+                    topic_texts = df_pos[df_pos["Predicted_Topic"] == selected_topic]["lemmatized_text"].tolist()
 
                     if len(topic_texts) > 0:
                         wc = generate_wordcloud_pos(topic_texts, selected_topic)
@@ -947,11 +1119,24 @@ with tab3:
                         buf = io.BytesIO()
                         fig.savefig(buf, format="png", bbox_inches="tight", dpi=120)
                         
-                        col1, col2, col3 = st.columns([1, 2, 1])
+                        col1, col2, col3 = st.columns([1.5, 2, 1.5])
                         with col2:
                             st.markdown(f"""<div style='text-align:center; font-weight:600; font-size:20px'>
                                         Topic: {selected_topic} </div>""", unsafe_allow_html=True)
                             st.image(buf, use_container_width=True)
+
+                            col1, col2, col3 = st.columns([0.8, 2, 0.4])
+
+                            with col2:
+                                with st.popover("💡 How to read the Word Cloud"):
+                                    st.markdown("""
+                                    **Quick Guide:**
+                                    - Word size indicates **frequency of occurrence** in the reviews.
+                                    - The larger the word, the more frequently it appears.
+                                    - Colors have no specific meaning, they’re just for visualization.
+                                    - Use the word cloud to identify which words stand out the most in each topic.
+                                    """)
+
                     else:
                         st.info("No text data available for this topic.")
 
@@ -999,11 +1184,3 @@ with tab3:
     else:
 
         st.warning("⚠️ Please run the topic prediction first.")
-
-
-
-
-
-
-
-
